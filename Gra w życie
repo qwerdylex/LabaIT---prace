@@ -1,0 +1,240 @@
+#include <iostream>
+#include <windows.h>
+
+using namespace std;
+
+class board;
+void Initialize();
+void GetInput();
+void Update();
+void Render();
+void Shutdown();
+void C_Life();
+bool IsGameFinished = false;
+bool testujemy = false;
+int test = 0;
+int znaki = 0;
+int ileznaki();
+int ilefal();
+int fale = 0;
+
+
+int main()
+{
+    
+        Initialize();
+        ileznaki();
+        ilefal();
+        int tury = fale * 10;
+
+        for (int h = 0; h < znaki; ++h)
+        {
+            GetInput();
+            Update();
+            Render();
+        }
+
+        for (int y = 0; y < tury; ++y)
+        {
+            C_Life();
+            cout << "         " << endl;
+            cout << "         " << endl;
+            cout << " Nowa linia" << endl;
+            cout << "               " << endl;
+            Render();
+        }
+
+        Shutdown();
+       
+
+        return 0;
+    
+}
+
+class board
+{
+public:
+    board() // tworzenie planszy - moze nie bool?
+    {
+        for (int a = 0; a < size; ++a)
+        {
+            for (int b = 0; b < size; ++b)
+            {
+                tab[a][b] = D;
+            }
+        }
+    }
+
+    ~board() // nieszczneie planszy
+    {
+        cout << "Board is destroyed" << endl;
+    }
+
+    void pokaz() // pokazanie planszy
+    {
+        for (int a = 0; a < size; ++a)
+        {
+            for (int b = 0; b < size; ++b)
+            {
+                cout << tab[a][b] << " ";
+            }
+            cout << endl;
+        }
+    };
+
+   
+    void board_update() // zamiana martwej komorki na zywa
+    {
+        if (input_a >= 0 && input_a < size && input_b >= 0 && input_b < size)
+        {
+            tab[input_a][input_b] = L;
+
+            cout << "update is done" << endl;
+        }
+    };
+
+    void board_GetInput() // odbieranie inputow na komorke - moze losowe?
+    {
+        cout << "Od ktorej kolumny zaczynamy?" << endl;
+        cin >> input_a;
+        cout << "Jeszcze wiersz" << endl;
+        cin >> input_b;
+    };
+
+    void B_Life() // tutaj sprawdzamy sasiadow oraz najlepiej zamieniamy jak pasuje 
+    {
+
+        for (int v = 0; v < size; ++v) // nowa tablica
+            for (int b = 0; b < size; ++b)
+            {
+                new_tab[v][b];
+            }
+     
+
+        for (int v = 0; v < size; ++v) // literuje tablice
+        {
+            for (int b = 0; b < size; ++b)
+            {
+                int LC = 0;
+
+                for (int i = -1; i <= 1; i++)
+                {
+                    for (int j = -1; j <= 1; j++) // dwa fory dla sasiedztwa
+                    {
+                        int nv = v + i;
+                        int nb = b + j;
+
+                        if (i == 0 && j == 0) // olewa sama siebie
+                        {
+                            continue;
+                        }
+
+                        if (nv >= 0 && nb >= 0 && nv < size && nb < size) // sprawdzam czy nie wychodzi poza tablice
+                        {
+                            if (tab[nv][nb] == 1) // jak jest zywa to +1
+                            {
+                                LC++;
+                            }
+                        }
+                       
+                    }
+                }
+
+                if (tab[v][b] == 1) // dla zywych
+                {
+                    if (LC == 2 || LC == 3)
+                    {
+                        new_tab[v][b] = 1;
+                    }
+                    else
+                        new_tab[v][b] = 0;
+                 
+                }
+                else // dla martwych
+                {
+                    if (LC == 3)
+                    {
+                        new_tab[v][b] = 1;
+                    }
+                    else
+                    {
+                        new_tab[v][b] = 0;
+                    }
+                }
+
+            }
+        }
+            
+        for (int v = 0; v < size; ++v)
+        {
+            for (int b = 0; b < size; ++b)
+            {
+                tab[v][b] = new_tab[v][b];
+            }
+        }
+    };
+
+   
+
+
+
+    static const int size = 20;
+    int tab[size][size];
+    int new_tab[size][size];
+
+protected:
+    int L = 1;
+    int D = 0;
+    int input_a = 0;
+    int input_b = 0;
+    int w;
+  
+};
+
+board* BD = new board();
+
+void Initialize()
+{
+    cout << " Life is forming" << endl;
+    BD->pokaz();
+};
+
+void GetInput()
+{
+    BD->board_GetInput();
+};
+
+void Update()
+{
+    BD->board_update();
+};
+
+void Render()
+{
+    BD->pokaz();
+};
+
+void C_Life()
+{
+   BD->B_Life();
+};
+
+void Shutdown()
+{
+    delete BD;
+    cout << "Po zyciu" << endl;
+};
+
+int ileznaki()
+{
+    cout << "Ile chcialbys wprowadzic znakow na poczatek?" << endl;
+    cin >> znaki;
+    return znaki;
+}
+
+int ilefal()
+{
+    cout << "Ile fal zycie bys chcial?" << endl;
+    cin >> fale;
+    return fale;
+}
