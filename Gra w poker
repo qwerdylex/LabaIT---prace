@@ -1,1 +1,208 @@
 
+#include <iostream>
+#include <vector>
+#include <map>
+#include <algorithm>
+#include <random>
+#include <ctime>
+#include <string>
+
+using namespace std;
+
+enum Suit { HEARTS, DIAMONDS, CLUBS, SPADES };
+
+class Card {
+public:
+    int value;
+    Suit suit;
+
+    Card(int v, Suit s) : value(v), suit(s) {}
+
+    string toString() const
+    {
+        map<int, string> values = {
+            {11,"J"}, {12,"Q"}, {13,"K"}, {14,"A"}
+        };
+        map<Suit, string> suits = {
+            {HEARTS,"H"}, {DIAMONDS,"D"},
+            {CLUBS,"C"}, {SPADES,"S"}
+        };
+
+        string val = (value <= 10) ? to_string(value) : values[value];
+        return val + suits[suit];
+    }
+};
+
+class Deck 
+{
+private:
+    vector<Card> cards;
+
+public:
+    Deck() 
+    {
+        for (int s = 0; s < 4; s++)
+            for (int v = 2; v <= 14; v++)
+                cards.push_back(Card(v, (Suit)s));
+    }
+
+    void shuffle()
+    {
+        auto rng = default_random_engine(time(0));
+        std::shuffle(cards.begin(), cards.end(), rng);
+    }
+
+    Card draw()
+    {
+        Card c = cards.back();
+        cards.pop_back();
+        return c;
+    }
+};
+
+class Hand
+{
+public:
+    vector<Card> cards;
+
+    void addCard(Card c) 
+    {
+        cards.push_back(c);
+    }
+
+    void show() const
+    {
+        for (size_t i = 0; i < cards.size(); i++)
+            cout << i + 1 << ":" << cards[i].toString() << "  ";
+        cout << endl;
+    }
+
+    int evaluate() const
+    {
+        map<int, int> valueCount;
+        map<Suit, int> suitCount;
+
+        vector<int> values;
+
+        for (const Card& c : cards) 
+        {
+            valueCount[c.value]++;
+            suitCount[c.suit]++;
+            values.push_back(c.value);
+        }
+
+        sort(values.begin(), values.end());
+
+        bool flush = false;
+        for (auto& s : suitCount)
+            if (s.second == 5) flush = true;
+
+        bool straight = true;
+        for (int i = 1; i < 5; i++)
+            if (values[i] != values[0] + i)
+                straight = false;
+
+        bool four = false, three = false;
+        int pairs = 0;
+
+        for (auto& v : valueCount) 
+        {
+            if (v.second == 4) four = true;
+            if (v.second == 3) three = true;
+            if (v.second == 2) pairs++;
+        }
+
+        if (straight && flush && values[0] == 10) return 9;
+        if (straight && flush) return 8;
+        if (four) return 7;
+        if (three && pairs == 1) return 6;
+        if (flush) return 5;
+        if (straight) return 4;
+        if (three) return 3;
+        if (pairs == 2) return 2;
+        if (pairs == 1) return 1;
+        return 0;
+    }
+};
+
+class Player
+{
+public:
+    Hand hand;
+    bool isComputer;
+
+    Player(bool comp = false) : isComputer(comp) {}
+
+    void exchangeCards(Deck& deck) 
+    {
+        if (isComputer)
+        {
+            // Prosty bot: wymienia wszystkie karty < 10
+            for (size_t i = 0; i < hand.cards.size(); i++) {
+                if (hand.cards[i].value < 10)
+                    hand.cards[i] = deck.draw();
+            }
+        }
+        else
+        {
+            cout << "Ktore karty chcesz wymienic? (numery oddzielone spacja, 0 = brak): ";
+            while (true) {
+                int idx;
+                cin >> idx;
+                if (idx == 0) break;
+                if (idx >= 1 && idx <= 5)
+                    hand.cards[idx - 1] = deck.draw();
+            }
+        }
+    }
+};
+
+class Game
+{
+private:
+    Deck deck;
+    Player player;
+    Player computer;
+
+public:
+    Game() : player(false), computer(true) {}
+
+    void play() 
+    {
+        deck.shuffle();
+
+        for (int i = 0; i < 5; i++) 
+        {
+            player.hand.addCard(deck.draw());
+            computer.hand.addCard(deck.draw());
+        }
+
+        cout << "\nTwoje karty:\n";
+        player.hand.show();
+
+        player.exchangeCards(deck);
+        computer.exchangeCards(deck);
+
+        cout << "\nTwoje nowe karty:\n";
+        player.hand.show();
+
+        cout << "\nKarty komputera:\n";
+        computer.hand.show();
+
+        int humanScore = player.hand.evaluate();
+        int compScore = computer.hand.evaluate();
+
+        if (humanScore > compScore)
+            cout << "\nWygrywasz!\n";
+        else if (humanScore < compScore)
+            cout << "\nKomputer wygrywa!\n";
+        else
+            cout << "\nRemis!\n";
+    }
+};
+
+int main() {
+    Game game;
+    game.play();
+    return 0;
+}
